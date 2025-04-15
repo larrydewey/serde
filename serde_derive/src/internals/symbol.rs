@@ -5,6 +5,7 @@ use syn::{Ident, Path};
 pub struct Symbol(&'static str);
 
 pub const ALIAS: Symbol = Symbol("alias");
+pub const ALIASINDEX: Symbol = Symbol("aliasindex");
 pub const BORROW: Symbol = Symbol("borrow");
 pub const BOUND: Symbol = Symbol("bound");
 pub const CONTENT: Symbol = Symbol("content");
@@ -21,6 +22,7 @@ pub const GETTER: Symbol = Symbol("getter");
 pub const INTO: Symbol = Symbol("into");
 pub const NON_EXHAUSTIVE: Symbol = Symbol("non_exhaustive");
 pub const OTHER: Symbol = Symbol("other");
+pub const REINDEX: Symbol = Symbol("reindex");
 pub const REMOTE: Symbol = Symbol("remote");
 pub const RENAME: Symbol = Symbol("rename");
 pub const RENAME_ALL: Symbol = Symbol("rename_all");

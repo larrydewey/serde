@@ -1864,7 +1864,15 @@ pub trait SerializeStruct {
     fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<(), Self::Error>
     where
         T: ?Sized + Serialize;
-
+        
+    /// Serialize a struct field by numberic index or string value. This method defaults to sending
+    /// the string value to [`serialize_field`] to keep backward-compatibility. This method should
+    /// be overridden for handling numeric indexes.
+    fn serialize_field_info<T>(&mut self, info: FieldInfo<'static>, value: &T) -> Result<(), Self::Error>
+    where 
+        T: ?Sized + Serialize {
+            self.serialize_field(info.string, value)
+        }
     /// Indicate that a struct field has been skipped.
     ///
     /// The default implementation does nothing.
@@ -1874,10 +1882,19 @@ pub trait SerializeStruct {
         Ok(())
     }
 
+
     /// Finish serializing a struct.
     fn end(self) -> Result<Self::Ok, Self::Error>;
 }
 
+/// Represents metadata for serilization for handling numeric indexes or string values for fields.
+pub struct FieldInfo<'a> {
+    /// A string literal representation of a field.
+    pub string: &'a str,
+
+    /// A numeric index representation of a field.
+    pub number: Option<usize>,
+}
 /// Returned from `Serializer::serialize_struct_variant`.
 ///
 /// # Example use

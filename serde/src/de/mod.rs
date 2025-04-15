@@ -1892,6 +1892,34 @@ pub trait MapAccess<'de> {
     fn size_hint(&self) -> Option<usize> {
         None
     }
+
+    /// Attempts to look ahead at the next field identifier without consuming it.
+    /// 
+    /// This provides both string and numeric representations of the field identifier
+    /// when available allowing deserializers to optimize field handling.
+    /// 
+    /// The default implementation returns None, indicating the information is not available.
+    /// Data formats that can provide this information are expected to override this method.
+    #[inline]
+    fn next_field_identifier(&mut self) -> Result<Option<FieldIdentifier>, Self::Error> {
+        Ok(None)
+    }
+}
+
+/// Structure holding metadata about a field's identifiers with both string and numeric representations.
+/// 
+/// This is the deserialization counterpart to [`FieldInfo`], enabling deserializers to
+/// handle fields identified either by name or by index, depending on the data format.
+/// 
+/// Deserializaers can use this information to optimize field access, particularly in binary
+/// formats where numeric identifiers may be more compact than strings.
+#[derive(Clone, Copy)]
+pub struct FieldIdentifier<'a> {
+    /// The string name of the field.
+    pub name: &'a str,
+
+    /// Optional numeric index of the field.
+    pub index: Option<usize>,
 }
 
 impl<'de, A> MapAccess<'de> for &mut A
@@ -1957,6 +1985,11 @@ where
     #[inline]
     fn size_hint(&self) -> Option<usize> {
         (**self).size_hint()
+    }
+
+    #[inline]
+    fn next_field_identifier(&mut self) -> Result<Option<FieldIdentifier>, Self::Error> {
+        (**self).next_field_identifier()
     }
 }
 

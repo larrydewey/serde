@@ -995,6 +995,8 @@ pub struct Field {
     getter: Option<syn::ExprPath>,
     flatten: bool,
     transparent: bool,
+    index: Option<syn::LitInt>,
+    alias_index: Vec<syn::LitInt>,
 }
 
 /// Represents the default to use for a field when deserializing.
@@ -1039,6 +1041,8 @@ impl Field {
         let mut borrowed_lifetimes = Attr::none(cx, BORROW);
         let mut getter = Attr::none(cx, GETTER);
         let mut flatten = BoolAttr::none(cx, FLATTEN);
+        let mut index_value = Attr::none(cx, REINDEX);
+        let mut alias_index = VecAttr::none(cx, ALIASINDEX);
 
         let ident = match &field.ident {
             Some(ident) => Name::from(&unraw(ident)),
@@ -1085,7 +1089,7 @@ impl Field {
                     for de_value in de {
                         de_name.set_if_none(Name::from(&de_value));
                         de_aliases.insert(&meta.path, Name::from(&de_value));
-                    }
+                    }                   
                 } else if meta.path == ALIAS {
                     // #[serde(alias = "foo")]
                     if let Some(s) = get_lit_str(cx, ALIAS, &meta)? {
@@ -1178,6 +1182,14 @@ impl Field {
                 } else if meta.path == FLATTEN {
                     // #[serde(flatten)]
                     flatten.set_true(&meta.path);
+                } else if meta.path == REINDEX {
+                    // #[serde(reindex = N)]
+                    let index = meta.value()?.parse::<syn::LitInt>()?;
+                    index_value.set(&meta.path, index)
+                } else if meta.path == ALIASINDEX {
+                    // #[serde(aliasindex = N)]
+                    let alias = meta.value()?.parse::<syn::LitInt>()?;
+                    alias_index.values.push(alias);
                 } else {
                     let path = meta.path.to_token_stream().to_string().replace(' ', "");
                     return Err(
@@ -1265,6 +1277,8 @@ impl Field {
             getter: getter.get(),
             flatten: flatten.get(),
             transparent: false,
+            index: index_value.get(),
+            alias_index: alias_index.get(),
         }
     }
 
@@ -1332,6 +1346,14 @@ impl Field {
 
     pub fn flatten(&self) -> bool {
         self.flatten
+    }
+
+    pub fn index(&self) -> Option<&syn::LitInt> {
+        self.index.as_ref()
+    }
+
+    pub fn alias_index(&self) -> &[syn::LitInt] {
+        &self.alias_index
     }
 
     pub fn transparent(&self) -> bool {
